@@ -1,2 +1,2 @@
-# Tristan-Gallet.github.io
+# Tristan-Gallet
 Portfolio
