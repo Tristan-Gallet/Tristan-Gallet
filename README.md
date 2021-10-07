@@ -1,2 +1,2 @@
-# Tristan-Gallet
+# Tristan Gallet
 Portfolio
