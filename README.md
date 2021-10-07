@@ -1,1 +1,1 @@
-# Projet 1: selection, transformation et visualisation de données sur la data [AirBnB](http://insideairbnb.com/) Paris
+# Projet 1: selection, transformation et visualisation de données sur la data [AirBnB Paris](http://insideairbnb.com/)
