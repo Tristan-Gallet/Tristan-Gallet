@@ -1,0 +1,62 @@
+# Visualisation de Données
+## Data: Airbnb Paris
+
+#### Introduction
+Insideairbnb.com est un site internet qui récupère les données de listings disponibles sur Airbnb.
+J'ai téléchargé les données de la ville de Paris datant de Juin 2021 pour ce NoteBook.  
+Pour mener à bien la séléction, le traitement et la représention graphique des données, on utilisera principalement les bibliothèques ggplot2 et dplyr. 
+  
+  
+  
+```{r, load-packages, include = FALSE}
+library(ggplot2)
+library(R.utils)
+library(dplyr)
+library(rmd2jupyter)
+library(ggthemes)
+library(data.table)
+library(knitr)
+library(viridis)
+library(RColorBrewer)
+```
+
+**On télécharge la data:**
+
+```{r, cache=TRUE}
+df <- data.table::fread("http://data.insideairbnb.com/france/ile-de-france/paris/2021-04-10/data/listings.csv.gz",encoding="Latin-1")
+```
+
+Pour le premier graphique on s'interessera au nombre de listings par quartier:
+
+```{r, echo=FALSE}
+df$neighbourhood_cleansed = sub("Ã´", "o", df$neighbourhood_cleansed, fixed = TRUE) #nettoie la data
+df$neighbourhood_cleansed = sub("Ã‰", "E", df$neighbourhood_cleansed, fixed = TRUE)
+df$neighbourhood_cleansed = sub("Ã©", "e", df$neighbourhood_cleansed, fixed = TRUE)
+```
+
+"nbdf" ne contient que certaines colonnes pour plus de lisibilité:
+
+```{r, results='asis'}
+nbdf = df %>% select(neighbourhood_cleansed,property_type,accommodates,price,last_scraped)
+nbdf %>% head() %>% knitr::kable()
+```
+```{r}
+#f68060
+nbdf %>%
+  ggplot(aes(y = reorder(neighbourhood_cleansed, table(neighbourhood_cleansed)[neighbourhood_cleansed]), fill = "f68060")) + 
+  labs(x = "Nombre de listing", y="", title = "Nombre de listing par quartier") +
+  geom_bar(colour = "black", alpha= .6, width =.85) +
+  geom_text(aes(label = ..count..), stat = "count", 
+            vjust = 0.45, hjust = 1, colour = "black") +
+  theme_wsj(base_size = 8) + guides(fill = FALSE)
+```
+
+```{r, include = FALSE}
+ggsave("plot1.png")
+```
+
+
+
+
+
+
