@@ -5,4 +5,4 @@
 * Traitement d'une datatable de 63090 lignes et 74 colomnes  
 * Fais avec le langage de programmation R et les librairies ggplot et dplyr principalement
 
-![](https://github.com/Tristan-Gallet/Tristan_Gallet/blob/main/plot1.png)
+![](https://github.com/Tristan-Gallet/Tristan_Gallet/blob/main/plot1.png?raw=true)
