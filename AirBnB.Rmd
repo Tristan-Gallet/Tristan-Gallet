@@ -1,0 +1,139 @@
+# Visualisation de Données
+## Data: Airbnb Paris
+
+#### Introduction
+Insideairbnb.com est un site internet qui récupère les données de listings disponibles sur Airbnb.
+J'ai téléchargé les données de la ville de Paris datant de Juin 2021 pour ce NoteBook.  
+Pour mener à bien la séléction, le traitement et la représention graphique des données, on utilisera principalement les bibliothèques ggplot2 et dplyr. 
+  
+  
+  
+```{r, load-packages, include = FALSE}
+library(ggplot2)
+library(R.utils)
+library(dplyr)
+library(rmd2jupyter)
+library(ggthemes)
+library(data.table)
+library(knitr)
+library(viridis)
+library(RColorBrewer)
+library(lubridate)
+```
+
+**On télécharge la data:**
+
+```{r, cache=TRUE}
+df <- data.table::fread("http://data.insideairbnb.com/france/ile-de-france/paris/2021-04-10/data/listings.csv.gz",encoding="Latin-1")
+
+calendar <- data.table::fread("http://data.insideairbnb.com/france/ile-de-france/paris/2021-04-10/data/calendar.csv.gz",encoding="Latin-1")
+
+```
+```{r}
+dim(df)
+```
+
+```{r, echo=FALSE}
+df$neighbourhood_cleansed = sub("Ã´", "o", df$neighbourhood_cleansed, fixed = TRUE) #nettoie la data
+df$neighbourhood_cleansed = sub("Ã‰", "E", df$neighbourhood_cleansed, fixed = TRUE)
+df$neighbourhood_cleansed = sub("Ã©", "e", df$neighbourhood_cleansed, fixed = TRUE)
+```
+Le dataset contient beaucoup de colomnes: 74 et 63090 lignes.
+"df2" ne contient que certaines colonnes pour plus de lisibilité: 
+
+```{r, results='asis'}
+df2 = df %>% select(neighbourhood_cleansed,property_type,accommodates,price,last_scraped)
+df2 %>% head() %>% knitr::kable()
+```
+***
+### Quartiers
+
+Pour ce premier plot, on regroupera chaque listing à un quartier pour ensuite faire le décompte par quartier et le visualiser sur un barplot décroissant.  
+Chaque nom de quartier correspond à un des 20 arrondissements de Paris.
+
+```{r}
+df2 %>%
+  ggplot(aes(y = reorder(neighbourhood_cleansed, table(neighbourhood_cleansed)[neighbourhood_cleansed]), fill = "f68060")) + 
+  labs(x = "Nombre de listing", y="", title = "Nombre de listing par quartier") +
+  geom_bar(colour = "black", alpha= .6, width =.85) +
+  geom_text(aes(label = ..count..), stat = "count", 
+            vjust = 0.45, hjust = 1, colour = "black") +
+  theme_wsj(base_size = 8) + guides(fill = FALSE)
+```
+
+On voit que des quartier qu'on estime très attractifs ("Louvre", "Palais-Bourbon", "Elysee"...) ont peu d'offres.  
+Ce fait peut-être expliqué par: une petite superficie de ces quartiers, un prix au m² élevé, peu de zones résidentiels...  
+
+
+**Etudions le prix pour un nouvel aperçu,**
+Prix moyen par nuit pour 2 personnes:
+
+```{r, warning=FALSE}
+twoPeople = df2 %>% filter(accommodates == 2)
+twoPeople$price = sub("$", "", twoPeople$price, fixed = TRUE)
+twoPeople$price = as.integer(twoPeople$price)
+
+twoPeople = twoPeople %>% group_by(neighbourhood_cleansed) %>% 
+  summarise(prix_moyen_par_nuit = round(mean(price, na.rm=TRUE),1)) %>% 
+  arrange(desc(prix_moyen_par_nuit)) %>% head() %>% rename(Quartier = neighbourhood_cleansed)
+
+twoPeople$prix_moyen_par_nuit = as.character(twoPeople$prix_moyen_par_nuit)
+twoPeople$prix_moyen_par_nuit = paste(twoPeople$prix_moyen_par_nuit, "€")
+
+twoPeople %>% knitr::kable()
+```
+On retrouve ici que les quartiers avec le moins de listing sont aussi les plus chères.
+
+***
+
+## Listing
+
+Sur Airbnb il est indiqué sur chaque listing combien de personnes il est censé pouvoir acceuillir.  
+Comptons et visualisons combien il y a de listing pour chaque nombre de personnes (oui cette phrase n'est pas simple).
+
+```{r, include = FALSE}
+ggsave("plot1.png", width = 8, height = 6)
+```
+
+```{r, warning=FALSE}
+NbPeoplePlot = df2
+NbPeoplePlot[NbPeoplePlot$accommodates > 7] = 7
+NbPeoplePlot$accommodates = as.character(NbPeoplePlot$accommodates)
+NbPeoplePlot[NbPeoplePlot$accommodates == "7"] = "7 et plus"
+
+NbPeoplePlot %>% filter(accommodates!=0) %>%
+  group_by(accommodates) %>% 
+  summarise(number_of_listings = n()) %>% 
+  ggplot(mapping = aes(x = accommodates, y = number_of_listings, fill = "#C9A0DC")) +
+  geom_bar(stat = "identity", color = "black", alpha= .55, width = 0.85) +
+  theme_wsj(base_size = 8) + guides(fill = FALSE) +
+  labs(y = "Number of listings", x="Accommodates", title = "Listing pour X nombre de personnes") +
+  geom_text(aes(label = number_of_listings), 
+            vjust = -0.25, hjust = 0.5, colour = "black")
+```
+
+Il y a une majorité de listings pour 2 personnes, c'est cohérent.  
+Je n'ai pas compté les étranges listings qui indiquaient 0 personnes.
+
+#### Évolution du prix en fonction du temps:
+
+
+```{r, warning=FALSE}
+
+price_date = calendar %>% filter(date >= as.Date("2021-04-30") & date <= as.Date("2022-04-01"))
+price_date$price = sub("$", "", price_date$price, fixed = TRUE)
+price_date$price = as.integer(price_date$price)
+price_date = price_date %>% group_by(date) %>% summarise(Average_price = mean(price, na.rm=TRUE))
+
+price_date %>% ggplot(aes(date,Average_price))+geom_line(size = 0.72, alpha = 0.8)+theme_light() +
+  labs(y = "Prix", x="", title = "Prix moyen en fonction du temps") +
+  theme_fivethirtyeight() + theme(axis.title = element_text())
+```
+```{r, include = FALSE}
+ggsave("plot2.png", width = 8, height = 6)
+```
+
+
+
+
+
