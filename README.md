@@ -1,4 +1,4 @@
-# Aperçu projet Data
+# Aperçu projet Data -Tristan Gallet
 
 ## Selection, transformation et visualisation de données sur la data [AirBnB Paris](http://insideairbnb.com/)
 
