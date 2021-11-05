@@ -1,5 +1,3 @@
-# Portfolio de Tristan Gallet
-
 # Selection, transformation et visualisation de données sur la data [AirBnB Paris](http://insideairbnb.com/)
 
 * Traitement d'une datatable de 63090 lignes et 74 colomnes  
